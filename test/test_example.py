@@ -1,20 +1,22 @@
+import json
 import os
-import shutil
 
 from src.BingImageCreator import ImageGen
 
 
-def test_save_images():
-    # create a temporary output directory for testing purposes
-    test_output_dir = "test_output"
-    os.mkdir(test_output_dir)
-    # download a test image
-    test_image_url = "https://picsum.photos/200"
-    gen = ImageGen(auth_cookie="")
-    gen.save_images([test_image_url], test_output_dir)
-    gen.save_images([test_image_url], test_output_dir, file_name="test_image")
-    # check if the image was downloaded and saved correctly
-    assert os.path.exists(os.path.join(test_output_dir, "test_image_0.jpeg"))
-    assert os.path.exists(os.path.join(test_output_dir, "0.jpeg"))
-    # remove the temporary output directory
-    shutil.rmtree(test_output_dir)
+def test_get_images():
+    with open(
+        os.path.join(os.path.expanduser("~"), ".config", "bing-cookies.json"), "r"
+    ) as f:
+        cookies = json.loads(f.read())
+        u = [x.get("value") for x in cookies if x.get("name") == "_U"][0]
+        srch = srch = [
+            x.get("value")
+            for x in cookies
+            if x.get("name") == "SRCHHPGUSR" and x.get("path") == "/images"
+        ][0]
+        print(srch)
+        gen = ImageGen(auth_cookie=u, auth_cookie_SRCHHPGUSR=srch)
+        list_img = gen.get_images("roasted coffee beans in palms")
+        assert list_img
+        print(list_img)

@@ -1,11 +1,10 @@
-from setuptools import find_packages
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
-    name="BingImageCreator",
-    version="0.5.0",
+    name="BingImageCreator-plus",
+    version="0.5.2",
     license="GNU General Public License v2.0",
-    author="Antonio Cheong",
+    author="Antonio Cheong+",
     author_email="acheong@student.dalat.org",
     description="High quality image generation by Microsoft. Reverse engineered API.",
     packages=find_packages("src"),

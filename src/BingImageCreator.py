@@ -4,15 +4,13 @@ import contextlib
 import json
 import os
 import random
-import sys
 import time
 from functools import partial
-from typing import Dict
-from typing import List
-from typing import Union
+from typing import Dict, List, Union
 
 import httpx
-import pkg_resources
+
+# import pkg_resources
 import regex
 import requests
 
@@ -22,9 +20,9 @@ FORWARDED_IP = (
     f"13.{random.randint(104, 107)}.{random.randint(0, 255)}.{random.randint(0, 255)}"
 )
 HEADERS = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
     "accept-language": "en-US,en;q=0.9",
-    "cache-control": "max-age=0",
+    "cache-control": "no-cache",
     "content-type": "application/x-www-form-urlencoded",
     "referrer": "https://www.bing.com/images/create/",
     "origin": "https://www.bing.com",
@@ -62,6 +60,7 @@ class ImageGen:
     Parameters:
         auth_cookie: str
         auth_cookie_SRCHHPGUSR: str
+
     Optional Parameters:
         debug_file: str
         quiet: bool
@@ -102,6 +101,7 @@ class ImageGen:
         payload = f"q={url_encoded_prompt}&qs=ds"
         # https://www.bing.com/images/create?q=<PROMPT>&rt=3&FORM=GENCRE
         url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=4&FORM=GENCRE"
+        print(url)
         response = self.session.post(
             url,
             allow_redirects=False,
@@ -130,12 +130,12 @@ class ImageGen:
             raise Exception(error_unsupported_lang)
         if response.status_code != 302:
             # if rt4 fails, try rt3
+            print(response.status_code)
             url = f"{BING_URL}/images/create?q={url_encoded_prompt}&rt=3&FORM=GENCRE"
             response = self.session.post(url, allow_redirects=False, timeout=200)
             if response.status_code != 302:
                 if self.debug_file:
                     self.debug(f"ERROR: {error_redirect}")
-                print(f"ERROR: {response.text}")
                 raise Exception(error_redirect)
         # Get redirect URL
         redirect_url = response.headers["Location"].replace("&nfy=1", "")
@@ -173,14 +173,11 @@ class ImageGen:
         # Remove duplicates
         normal_image_links = list(set(normal_image_links))
 
-        # Bad images
-        bad_images = [
-            "https://r.bing.com/rp/in-2zU3AJUdkgFe7ZKv19yPBHVs.png",
-            "https://r.bing.com/rp/TX9QuO3WzcCJz1uaaSwQAz39Kb0.jpg",
-        ]
+        # remove svg
         for img in normal_image_links:
-            if img in bad_images:
-                raise Exception("Bad images")
+            if ".svg" in img:
+                normal_image_links.remove(img)
+
         # No images
         if not normal_image_links:
             raise Exception(error_no_images)
@@ -339,14 +336,11 @@ class ImageGenAsync:
         # Remove duplicates
         normal_image_links = list(set(normal_image_links))
 
-        # Bad images
-        bad_images = [
-            "https://r.bing.com/rp/in-2zU3AJUdkgFe7ZKv19yPBHVs.png",
-            "https://r.bing.com/rp/TX9QuO3WzcCJz1uaaSwQAz39Kb0.jpg",
-        ]
-        for im in normal_image_links:
-            if im in bad_images:
-                raise Exception("Bad images")
+        # remove svg
+        for img in normal_image_links:
+            if ".svg" in img:
+                normal_image_links.remove(img)
+
         # No images
         if not normal_image_links:
             raise Exception("No images")
@@ -463,9 +457,9 @@ def main():
 
     args = parser.parse_args()
 
-    if args.version:
-        print(pkg_resources.get_distribution("BingImageCreator").version)
-        sys.exit()
+    # if args.version:
+    #     print(pkg_resources.get_distribution("BingImageCreator").version)
+    #     sys.exit()
 
     # Load auth cookie
     cookie_json = None
